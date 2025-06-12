@@ -1,0 +1,2037 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Económico Argentina - Interactivo (Responsivo)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #ffffff;
+            overflow-x: hidden; 
+            overflow-y: auto; 
+            min-height: 100vh; 
+            position: relative;
+            overscroll-behavior-y: contain;
+        }
+
+        .main-container {
+            position: relative;
+            width: 100vw;
+            min-height: 100vh; 
+            padding-top: 70px; 
+            padding-bottom: 50px; 
+            transition: padding-top 0.3s ease-in-out; 
+        }
+
+        .bg-animation {
+            position: fixed; 
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0; 
+        }
+
+        /* Digital Clock Styles */
+        .digital-clock-container {
+            position: fixed;
+            top: 10px; 
+            left: 10%; 
+            transform: translateX(-50%); 
+            z-index: 10000; 
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(5px);
+            padding: 4px 8px; 
+            border-radius: 6px; 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 1px 8px rgba(0,0,0,0.25);
+            text-align: center;
+            min-width: 120px; 
+            height: 42px; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .time-display {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px; 
+            color: #00ffff; 
+            letter-spacing: 0.5px; 
+            text-shadow: 0 0 3px #00ffff, 0 0 5px #00ffff;
+            margin-bottom: 1px; 
+            display: flex; 
+            justify-content: center;
+        }
+        .time-display .digit-group {
+            min-width: 1.6ch; 
+            text-align: center;
+        }
+        .time-display .separator {
+            animation: blink-original 1s infinite;
+            padding: 0 1px;
+        }
+
+        @keyframes blink-original {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .date-display {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            font-size: 8px; 
+            color: #a0a0a0; 
+            letter-spacing: 0.25px;
+        }
+        /* End Digital Clock Styles */
+
+
+        .control-panel {
+            position: fixed;
+            left: 0; 
+            right: 0; 
+            z-index: 9999; 
+            background: rgba(0, 0, 0, 0.85); 
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
+            padding: 10px; 
+            box-shadow: 0 2px 15px rgba(0,0,0,0.4); 
+            transition: height 0.3s ease-in-out, padding-bottom 0.3s ease-in-out, top 0.3s ease-in-out;
+            overflow: hidden; 
+        }
+        .control-panel-title-div { 
+            font-size: 15px; 
+            font-weight: 600; 
+            width: 100%; 
+            text-align: center; 
+            margin-bottom: 8px; 
+            letter-spacing: 0.5px; 
+            text-transform: none; 
+            padding-top: 5px;
+        }
+        .control-panel-header { 
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 5px;
+            align-items: center;
+        }
+         @media (min-width: 769px) {
+            .control-panel {
+                top: 20px !important; 
+                right: 20px;
+                left: auto; 
+                width: auto; 
+                min-width: 500px; 
+                border-radius: 15px;
+                padding: 0 15px; 
+                border-bottom: none; 
+                z-index: 10000; 
+                height: 54px; 
+                display: flex; 
+                flex-direction: row; 
+                align-items: center; 
+                justify-content: flex-end; 
+            }
+            .control-panel-title-div {
+                margin-bottom: 0; 
+                padding-top: 0;
+                width: auto; 
+                margin-right: auto; 
+                white-space: nowrap; 
+            }
+            .control-panel-header { 
+                 flex-wrap: nowrap; 
+                 justify-content: flex-end; 
+                 gap: 8px; 
+                 width: auto; 
+            }
+             .main-container {
+                padding-top: 95px; 
+                padding-bottom: 50px; 
+            }
+            .digital-clock-container { 
+                top: 28px; 
+                left: 30px; 
+                transform: translateX(0); 
+                padding: 6px 12px; 
+                z-index: 9999;
+                height: 54px; 
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+            .time-display { font-size: 20px; letter-spacing: 1.2px; margin-bottom: 2px;} 
+            .date-display { font-size: 9px; }
+        }
+
+
+        .control-btn {
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 6px 10px; 
+            margin: 2px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 11px; 
+            transition: all 0.3s ease;
+            display: inline-flex; 
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap; 
+        }
+         @media (min-width: 769px) {
+            .control-btn {
+                 padding: 8px 12px; 
+                 font-size: 12px;
+            }
+        }
+
+        .control-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        .control-btn svg { 
+            width: 1em;
+            height: 1em;
+            fill: currentColor;
+        }
+
+        /* Panel Manager Section (inside .control-panel) */
+        .panel-manager-section {
+            max-height: 0; 
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out, padding-top 0.3s ease-in-out, padding-bottom 0.3s ease-in-out, margin-top 0.3s ease-in-out;
+            padding-top: 0;
+            padding-bottom: 0;
+            width: 100%;
+            margin-top: 0; 
+        }
+        .panel-manager-section.expanded {
+            max-height: 50vh; 
+            padding-top: 15px;
+            padding-bottom: 15px;
+            margin-top: 10px; 
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .panel-manager-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 15px 0; 
+            max-height: 30vh; 
+            overflow-y: auto;
+        }
+        .panel-manager-list li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 5px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 13px;
+        }
+        .panel-manager-list li:last-child { border-bottom: none; }
+        .panel-manager-list label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            flex-grow: 1;
+        }
+        .panel-manager-list input[type="checkbox"] {
+            accent-color: #667eea;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .panel-manager-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .pm-action-btn {
+            border: none;
+            border-radius: 50%; 
+            width: 22px;  
+            height: 22px; 
+            font-size: 10px; 
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .pm-action-btn.confirm { background-color: #2ed573; }
+        .pm-action-btn.cancel { background-color: #ff4757; }
+        .pm-action-btn:hover { transform: scale(1.1); }
+        .pm-action-btn svg { 
+            width: 12px; 
+            height: 12px;
+        }
+
+
+        .draggable-panel {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease; 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column; 
+            touch-action: none; 
+        }
+        
+        .informative-panel {
+            position: fixed !important; 
+            z-index: 10002 !important; 
+            max-width: 1200px; 
+        }
+
+
+        .draggable-panel:hover {
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .dragging { 
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+        .mobile-panel-dragging { 
+            opacity: 0.8;
+            position: fixed !important; 
+            transition: none !important; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            z-index: 10001 !important;
+        }
+        .drop-placeholder {
+            background-color: rgba(102, 126, 234, 0.1);
+            border: 2px dashed rgba(102, 126, 234, 0.3);
+            border-radius: 20px;
+            margin: 0 auto 20px auto !important; 
+            width: 95% !important;
+            max-width: 500px;
+            box-sizing: border-box;
+        }
+        
+        .panel-header {
+            padding: 10px 15px; 
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move; 
+            height: 45px; 
+            flex-shrink: 0; 
+        }
+
+        .panel-title {
+            font-weight: 600;
+            font-size: 14px; 
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-right: auto; 
+        }
+
+        .panel-controls {
+            display: flex;
+            gap: 4px; 
+            align-items: center; 
+        }
+
+        .panel-btn {
+            width: 22px;  
+            height: 22px; 
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px; 
+            transition: all 0.2s ease;
+            background-color: rgba(255,255,255,0.1); 
+            color: white;
+        }
+        .panel-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+
+        .close-btn { background: #ff4757; color: #fff; }
+        .panel-btn.back-btn { 
+            background: #ffd700; 
+            color: #000;
+        }
+        .panel-btn:hover:not(:disabled) { transform: scale(1.1); }
+
+
+        .panel-content {
+            flex-grow: 1; 
+            overflow-y: auto; 
+            overflow-x: hidden; 
+            box-sizing: border-box;
+            padding: 15px; 
+            touch-action: pan-y; 
+        }
+        .informative-panel .panel-content { 
+            display: flex;
+            flex-direction: column;
+            padding: 10px; 
+        }
+        .informative-panel .chart-container {
+            flex-grow: 1; 
+            min-height: 150px; 
+        }
+        
+        #panel1 .panel-content {
+            display: flex;
+            flex-wrap: wrap; 
+            align-content: flex-start; 
+            gap: 10px; 
+        }
+
+        .dolar-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px; 
+            padding: 10px; 
+            position: relative;
+            overflow: hidden;
+            flex: 1 1 140px; 
+            min-width: 120px; 
+            display: flex;
+            flex-direction: column; 
+            justify-content: space-between; 
+            cursor: pointer; 
+        }
+
+        .dolar-card::before {
+            content: ''; position: absolute; top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shine 3s infinite;
+        }
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .dolar-type { 
+            font-size: 12px; 
+            opacity: 0.8; 
+            margin-bottom: 3px; 
+            word-wrap: break-word; 
+        }
+        .dolar-price { 
+            font-size: 20px; 
+            font-weight: bold; 
+            margin-bottom: 5px; 
+            word-wrap: break-word; 
+        }
+        .dolar-change { 
+            font-size: 11px; 
+            display: flex; 
+            align-items: center; 
+            gap: 4px; 
+            word-wrap: break-word; 
+        }
+        .positive { color: #2ed573; }
+        .negative { color: #ff4757; }
+
+        #panel2 .panel-content {
+            padding: 10px; 
+            display: flex; 
+            overflow: hidden; 
+        }
+        
+        .chart-container { 
+            position: relative; 
+            width: 100%; 
+            height: 100%; 
+            min-height: 200px; 
+        }
+        
+        #panel3 .panel-content { 
+            display: flex; 
+            flex-direction: column; 
+        }
+        .economic-indicators-grid {
+            display: grid !important; 
+            gap: 10px !important; 
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); 
+            flex-grow: 1; 
+            align-content: flex-start;
+        }
+        #panel3 .economic-indicators-grid > div { 
+            padding: 10px; 
+            border-radius: 10px;
+            display: flex; 
+            flex-direction: column;
+            justify-content: center; 
+            align-items: center; 
+            text-align: center; 
+            min-height: 80px; 
+            word-wrap: break-word; 
+        }
+        #panel3 .economic-indicators-grid > div > div[style*="font-size: 12px"] { 
+            font-size: 11px !important; 
+        }
+        #panel3 .economic-indicators-grid > div > div[style*="font-size: 24px"] { 
+            font-size: 20px !important; 
+            margin-bottom: 3px;
+        }
+
+        #panelStats .panel-content {
+            padding: 15px;
+            display: flex; 
+            flex-direction: column; 
+        }
+        #panelStats .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); 
+            gap: 10px;
+            width: 100%; 
+            flex-grow: 1; 
+            align-content: space-around; 
+        }
+        #panelStats .stat-item {
+            text-align: center;
+            padding: 10px; 
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px; 
+            min-height: 70px; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            cursor: pointer; 
+        }
+        #panelStats .stat-value {
+            font-size: 20px; 
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        #panelStats .stat-label {
+            font-size: 10px; 
+            opacity: 0.8;
+        }
+
+
+        .new-panel-content-wrapper { 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            height: 100%; 
+            padding: 10px; 
+            box-sizing: border-box;
+            overflow: hidden; 
+        }
+        .new-panel-content-wrapper h3,
+        .new-panel-content-wrapper p {
+            word-wrap: break-word;
+            margin-bottom: 10px;
+        }
+        .new-panel-content-wrapper p { font-size: 14px; }
+        .new-panel-content-wrapper .random-value-container {
+            margin-top: auto; 
+            padding: 10px 15px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 10px;
+            width: auto; 
+            max-width: 90%; 
+            box-sizing: border-box;
+        }
+        .new-panel-content-wrapper .random-value-container .value { font-weight: bold; word-break: break-all; }
+        .new-panel-content-wrapper .random-value-container .label { opacity: 0.8; word-wrap: break-word; }
+
+
+        .hidden { display: none !important; }
+        .minimized { height: 45px !important; flex-grow: 0 !important; overflow: hidden !important; } 
+        .minimized .panel-content { display: none !important; }
+
+
+        .resize-handle {
+            position: absolute; bottom: 0; right: 0;
+            width: 20px; height: 20px; 
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            cursor: se-resize; 
+            border-radius: 0 0 20px 0; 
+            z-index: 101; 
+        }
+        @media (hover: none) { 
+            .resize-handle {
+                width: 30px;
+                height: 30px;
+            }
+        }
+        .resize-handle:hover { background: linear-gradient(45deg, #764ba2, #667eea); }
+
+        .news-ticker {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            height: 40px; 
+            display: flex; align-items: center;
+            overflow: hidden; z-index: 500;
+        }
+        .ticker-content {
+            animation: scroll 30s linear infinite;
+            white-space: nowrap; font-size: 13px; 
+            padding-left: 100%; 
+        }
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-200%); } 
+        }
+
+        .glow-effect {
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        @keyframes glow {
+            from { box-shadow: 0 0 20px rgba(102, 126, 234, 0.5); }
+            to { box-shadow: 0 0 30px rgba(102, 126, 234, 0.8); }
+        }
+
+        /* --- Responsive Styles for Mobile --- */
+        @media (max-width: 768px) {
+            body {
+                overflow-x: hidden; 
+            }
+             .main-container {
+                padding-bottom: 80px; 
+            }
+            .digital-clock-container {
+                left: 50%;
+                transform: translateX(-50%);
+                top: 10px; 
+                width: auto; 
+                padding: 8px 12px;
+                border-radius: 8px;
+                z-index: 10001; 
+            }
+
+            .time-display { font-size: 18px; letter-spacing: 1px; margin-bottom: 2px;} 
+            .date-display { font-size: 9px; }
+
+
+            .draggable-panel:not(.informative-panel) { 
+                position: relative !important; 
+                width: 95% !important;
+                max-width: 500px; 
+                margin: 0 auto 20px auto !important; 
+                left: auto !important;
+                top: auto !important;
+                right: auto !important;
+                bottom: auto !important;
+                transform: none !important; 
+                height: auto !important; 
+                min-height: 0 !important; 
+                z-index: auto !important; 
+            }
+            .informative-panel { 
+                touch-action: none; 
+                width: 95vw !important; 
+                height: 80vh !important;
+            }
+            .informative-panel .panel-content {
+                 touch-action: pan-y; 
+            }
+
+
+            .panel-header {
+                height: 40px;
+                padding: 0 10px;
+                touch-action: manipulation; 
+            }
+             .draggable-panel.mobile-panel-dragging .panel-header {
+                cursor: grabbing; 
+            }
+
+            .panel-title {
+                font-size: 13px;
+            }
+            .panel-btn { 
+                width: 20px;
+                height: 20px;
+                font-size: 9px;
+            }
+            .panel-btn.move-up-btn, .panel-btn.move-down-btn {
+                font-size: 14px; 
+            }
+
+            .panel-content {
+                padding: 10px;
+            }
+            .resize-handle {
+                display: none !important; 
+            }
+
+            #panelStats .stat-grid {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+                gap: 8px;
+            }
+            #panelStats .stat-item {
+                padding: 8px;
+                min-height: 60px;
+            }
+            #panelStats .stat-value {
+                font-size: 18px;
+            }
+            #panelStats .stat-label {
+                font-size: 10px;
+            }
+
+            .dolar-card { 
+                flex-basis: calc(50% - 8px); 
+                min-width: 110px; 
+                padding: 8px; 
+            }
+            #panel1 .panel-content {
+                 gap: 8px; 
+            }
+             .dolar-type { font-size: 11px; margin-bottom: 2px;}
+             .dolar-price { font-size: 18px; margin-bottom: 3px;}
+             .dolar-change { font-size: 10px; gap: 3px;}
+
+
+            @media (max-width: 480px) {
+                .dolar-card {
+                    flex-basis: 100%; 
+                }
+                .informative-panel {
+                    width: 95vw !important;
+                    height: 90vh !important;
+                }
+                .digital-clock-container {
+                    padding: 6px 8px;
+                }
+                .time-display { font-size: 16px; } 
+                .date-display { font-size: 8px; } 
+
+
+            }
+
+            .chart-container {
+                min-height: 250px; 
+            }
+
+            #panel3 .economic-indicators-grid {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            }
+
+            .news-ticker { 
+                display: flex !important; 
+                height: 40px;
+                padding: 0 10px; 
+            }
+            .ticker-content {
+                font-size: 12px;
+            }
+
+            .panel-manager-list li {
+                font-size: 13px;
+            }
+             .panel-manager-list input[type="checkbox"] {
+                width: 16px;
+                height: 16px;
+            }
+            .pm-action-btn { 
+                width: 28px; 
+                height: 28px;
+                font-size: 12px;
+            }
+            .pm-action-btn svg {
+                width: 14px;
+                height: 14px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="main-container" id="mainPanelContainer"> 
+        <div class="bg-animation" id="bgAnimation"></div>
+        
+        <div class="digital-clock-container" id="digitalClock">
+            <div class="time-display" id="timeDisplay">00:00:00</div>
+            <div class="date-display" id="dateDisplay">DD/MM/AAAA</div>
+        </div>
+
+        <div class="control-panel" id="appControlPanel">
+            <div class="control-panel-title-div">Panel de Control</div>
+            <div class="control-panel-header"> 
+                <button class="control-btn" onclick="showAllPanels()">Mostrar Todo</button>
+                <button class="control-btn" onclick="hideAllPanels()">Ocultar Todo</button>
+                <button class="control-btn" onclick="resetPositions()">Resetear</button>
+                <button class="control-btn" onclick="toggleGlowEffect()">Efectos</button>
+                <button class="control-btn" onclick="addNewPanel()">+ Panel</button>
+                <button class="control-btn" id="togglePanelManagerBtn">
+                    <svg viewBox="0 0 24 24"><path d="M4 18h16v-2H4v2zm0-5h16v-2H4v2zm0-5h16V6H4v2z"></path></svg>
+                    Paneles
+                </button>
+            </div>
+            <div class="panel-manager-section" id="panelManagerSection">
+                <ul class="panel-manager-list" id="panelManagerList">
+                    </ul>
+                <div class="panel-manager-actions">
+                    <button class="pm-action-btn cancel" id="cancelPanelVisibilityBtn" title="Cancelar">
+                        <svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+                    </button>
+                    <button class="pm-action-btn confirm" id="confirmPanelVisibilityBtn" title="Confirmar">
+                        <svg viewBox="0 0 24 24"><path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="draggable-panel" id="panelStats" style="width: 380px; height: 280px; top: 100px; left: 450px; z-index: 100;">
+            <div class="panel-header">
+                <span class="panel-title">📊 Estadísticas Clave</span>
+                <div class="panel-controls">
+                    <button class="panel-btn close-btn" onclick="togglePanel('panelStats')">×</button>
+                </div>
+            </div>
+            <div class="panel-content">
+                <div class="stat-grid">
+                    <div class="stat-item activator-subpanel" data-info-type="inflation-annual" data-info-title="Detalle Inflación Anual">
+                        <div class="stat-value" id="inflationRate">12.8%</div>
+                        <div class="stat-label">Inflación Mensual</div>
+                    </div>
+                    <div class="stat-item activator-subpanel" data-info-type="risk-country-detail" data-info-title="Análisis Riesgo País">
+                        <div class="stat-value" id="riskCountry">2.341</div>
+                        <div class="stat-label">Riesgo País</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="reserves">$28.5B</div>
+                        <div class="stat-label">Reservas BCRA</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="dolarCcl">$1.185</div>
+                        <div class="stat-label">Dólar CCL</div>
+                    </div>
+                </div>
+            </div>
+            <div class="resize-handle"></div>
+        </div>
+
+
+        <div class="draggable-panel" id="panel1" style="width: 400px; height: auto; top: 100px; left: 30px; z-index: 100;">
+            <div class="panel-header">
+                <span class="panel-title">💰 Cotizaciones del Dólar</span>
+                <div class="panel-controls">
+                     <button class="panel-btn close-btn" onclick="togglePanel('panel1')">×</button>
+                </div>
+            </div>
+            <div class="panel-content">
+                <div class="dolar-card activator-subpanel" data-info-type="dolar-oficial-detail" data-info-title="Detalle Dólar Oficial">
+                    <div class="dolar-type">Dólar Oficial</div>
+                    <div class="dolar-price">$965.50</div>
+                    <div class="dolar-change positive">↗ +2.3% (+$21.75)</div>
+                </div>
+                <div class="dolar-card activator-subpanel" data-info-type="dolar-blue-detail" data-info-title="Detalle Dólar Blue">
+                    <div class="dolar-type">Dólar Blue</div>
+                    <div class="dolar-price">$1,185.00</div>
+                    <div class="dolar-change negative">↘ -0.8% (-$9.50)</div>
+                </div>
+                <div class="dolar-card">
+                    <div class="dolar-type">Dólar MEP</div>
+                    <div class="dolar-price">$1,156.20</div>
+                    <div class="dolar-change positive">↗ +1.2% (+$13.70)</div>
+                </div>
+                <div class="dolar-card">
+                    <div class="dolar-type">Dólar CCL</div>
+                    <div class="dolar-price">$1,171.80</div>
+                    <div class="dolar-change positive">↗ +0.9% (+$10.45)</div>
+                </div>
+            </div>
+            <div class="resize-handle"></div>
+        </div>
+
+        <div class="draggable-panel" id="panel2" style="width: calc(100vw - 880px); height: 520px; top: 100px; left: 850px; z-index: 100;">
+            <div class="panel-header">
+                <span class="panel-title">📊 Gráfico Evolución Dólar</span>
+                <div class="panel-controls">
+                     <button class="panel-btn close-btn" onclick="togglePanel('panel2')">×</button>
+                </div>
+            </div>
+            <div class="panel-content">
+                <div class="chart-container">
+                    <canvas id="dolarChart"></canvas>
+                </div>
+            </div>
+            <div class="resize-handle"></div>
+        </div>
+
+        <div class="draggable-panel" id="panel3" style="width:400px; height: 250px; top:370px; left: 30px; z-index: 100;">
+            <div class="panel-header">
+                <span class="panel-title">Precios e Inflación</span>
+                <div class="panel-controls">
+                     <button class="panel-btn close-btn" onclick="togglePanel('panel3')">×</button>
+                </div>
+            </div>
+            <div class="panel-content">
+                <div class="economic-indicators-grid"> 
+                    <div class="activator-subpanel" data-info-type="ipc-mensual-detail" data-info-title="Detalle IPC Inflación Mensual" style="background: linear-gradient(45deg, #ff8a50, #ff6d2e);">
+                        <div style="font-size: 11px; opacity: 0.9;">IPC Inflación mensual</div>
+                        <div style="font-size: 20px; font-weight: bold;">11.0%</div>
+                    </div>
+                    <div class="activator-subpanel" data-info-type="rem-expectativas-detail" data-info-title="Detalle REM Expectativas de Inflación" style="background: linear-gradient(45deg, #4caf50, #388e3c);">
+                        <div style="font-size: 11px; opacity: 0.9;">REM Expectativas de inflación</div>
+                        <div style="font-size: 20px; font-weight: bold;">9.5%</div>
+                    </div>
+                    <div class="activator-subpanel" data-info-type="ipc-interanual-detail" data-info-title="Detalle IPC Inflación Interanual" style="background: linear-gradient(45deg, #2196f3, #1976d2);">
+                        <div style="font-size: 11px; opacity: 0.9;">IPC Inflación Interanual</div>
+                        <div style="font-size: 20px; font-weight: bold;">289.4%</div>
+                    </div>
+                </div>
+            </div>
+            <div class="resize-handle"></div>
+        </div>
+
+        <div class="news-ticker">
+            <div class="ticker-content">
+                🇦🇷 BCRA mantiene tasa de referencia en 133% • Reservas internacionales: $28.5B • Inflación mensual: 12.8% • Dólar blue: $1,185 • Riesgo país: 2,341 puntos • 📈 Mercados emergentes en alza • 
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let isDragging = false; 
+        let dragTarget = null; 
+        let dragOffset = { x: 0, y: 0 }; 
+        let isResizing = false; 
+        let resizeTarget = null; 
+        
+        let isMobileDragging = false; 
+        let mobileDragTarget = null; 
+        let mobileDragStartY = 0; 
+        let mobileDragPlaceholder = null; 
+        let justFinishedMobileDrag = false; 
+        let desktopDragMoved = false; 
+        let mobileAutoScrollInterval = null;
+        let mobileDragInitialScroll = 0; 
+
+        let glowEnabled = false;
+        let panelCounter = 3; 
+        let informativePanelCounter = 0; 
+        let highestZIndex = 100; 
+        let isMobileView = window.innerWidth <= 768;
+
+        let scene, camera, rendererThree, particles = []; 
+        let dolarEvolutionChart = null;
+        let activeInformativeChart = null; 
+
+        let panelManagerSection, panelManagerListEl, togglePanelManagerBtn, 
+            confirmPanelVisibilityBtn, cancelPanelVisibilityBtn;
+        let initialPanelVisibilityStates = []; 
+        let previouslyVisiblePanels = []; 
+
+
+        function initBackground() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            rendererThree = new THREE.WebGLRenderer({ alpha: true, antialias: true }); 
+            rendererThree.setClearColor(0x000000, 0); 
+            rendererThree.setSize(window.innerWidth, window.innerHeight);
+            const bgAnimationEl = document.getElementById('bgAnimation');
+            if (bgAnimationEl) bgAnimationEl.appendChild(rendererThree.domElement);
+            const geometry = new THREE.SphereGeometry(0.5, 8, 8);
+            const material = new THREE.MeshBasicMaterial({ color: 0x667eea, transparent: true, opacity: 0.6 });
+            for (let i = 0; i < 100; i++) {
+                const particle = new THREE.Mesh(geometry, material);
+                particle.position.set((Math.random() - 0.5) * 100, (Math.random() - 0.5) * 100, (Math.random() - 0.5) * 100);
+                particle.velocity = new THREE.Vector3((Math.random() - 0.5) * 0.02, (Math.random() - 0.5) * 0.02, (Math.random() - 0.5) * 0.02);
+                particles.push(particle);
+                scene.add(particle);
+            }
+            camera.position.z = 50;
+            animateBackground();
+        }
+
+        function animateBackground() {
+            requestAnimationFrame(animateBackground);
+            particles.forEach(p => {
+                p.position.add(p.velocity);
+                p.rotation.x += 0.01; p.rotation.y += 0.01;
+                if (Math.abs(p.position.x) > 50) p.velocity.x *= -1;
+                if (Math.abs(p.position.y) > 50) p.velocity.y *= -1;
+                if (Math.abs(p.position.z) > 50) p.velocity.z *= -1;
+            });
+            if(rendererThree) rendererThree.render(scene, camera);
+        }
+
+        function initChart() {
+            const canvasElement = document.getElementById('dolarChart');
+            if (!canvasElement) return;
+            const ctx = canvasElement.getContext('2d');
+            if (dolarEvolutionChart) dolarEvolutionChart.destroy();
+            dolarEvolutionChart = new Chart(ctx, {
+                type: 'line',
+                data: { 
+                    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                    datasets: [{
+                        label: 'Dólar Blue', data: [850, 920, 1050, 1100, 1080, 1150, 1200, 1180, 1160, 1185, 1170, 1185],
+                        borderColor: '#667eea', backgroundColor: 'rgba(102, 126, 234, 0.1)', tension: 0.4, fill: true
+                    }, {
+                        label: 'Dólar Oficial', data: [800, 820, 850, 890, 920, 940, 950, 960, 965, 965, 965, 965],
+                        borderColor: '#764ba2', backgroundColor: 'rgba(118, 75, 162, 0.1)', tension: 0.4, fill: true
+                    }]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#ffffff' } } },
+                    scales: {
+                        x: { ticks: { color: '#ffffff' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                        y: { ticks: { color: '#ffffff' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                    }
+                }
+            });
+        }
+        
+        function getEventCoordinates(event) {
+            if (event.touches && event.touches.length) return { x: event.touches[0].clientX, y: event.touches[0].clientY };
+            return { x: event.clientX, y: event.clientY };
+        }
+        
+        // --- Mobile Vertical Drag Functions (Must be defined before initDragSystem) ---
+        let mobileDragInitialPanelTopFixed = 0; 
+        const SCROLL_ZONE_SIZE = 75; 
+        const SCROLL_SPEED = 10; 
+        let autoScrollLoopId = null;
+
+        function startMobileDrag(e) {
+            if (!isMobileView || e.target.closest('.panel-btn')) return; 
+            isMobileDragging = true;
+            mobileDragTarget = e.target.closest('.draggable-panel');
+            if (!mobileDragTarget || mobileDragTarget.classList.contains('informative-panel')) {
+                isMobileDragging = false; 
+                return;
+            }
+
+            const coords = getEventCoordinates(e);
+            mobileDragStartY = coords.y;
+            
+            mobileDragPanelOriginalWidth = mobileDragTarget.offsetWidth + 'px';
+            mobileDragPanelOriginalHeight = mobileDragTarget.offsetHeight + 'px';
+            
+            mobileDragPlaceholder = document.createElement('div');
+            mobileDragPlaceholder.className = 'drop-placeholder';
+            mobileDragPlaceholder.style.height = mobileDragPanelOriginalHeight;
+            mobileDragTarget.parentElement.insertBefore(mobileDragPlaceholder, mobileDragTarget);
+            
+            const rect = mobileDragTarget.getBoundingClientRect();
+            mobileDragInitialPanelTopFixed = rect.top; 
+            mobileDragInitialScroll = document.documentElement.scrollTop || document.body.scrollTop; 
+            
+            mobileDragTarget.classList.add('mobile-panel-dragging'); 
+            mobileDragTarget.style.width = mobileDragPanelOriginalWidth;
+            mobileDragTarget.style.height = mobileDragPanelOriginalHeight;
+            mobileDragTarget.style.top = mobileDragInitialPanelTopFixed + 'px'; 
+            mobileDragTarget.style.left = rect.left + 'px'; 
+        }
+
+        function handleMobileDrag(e) {
+            if (!isMobileDragging || !mobileDragTarget) return;
+            e.preventDefault(); 
+            const coords = getEventCoordinates(e);
+            
+            let scrollDelta = 0;
+            if (coords.y < SCROLL_ZONE_SIZE) {
+                scrollDelta = -SCROLL_SPEED;
+            } else if (coords.y > window.innerHeight - SCROLL_ZONE_SIZE) {
+                scrollDelta = SCROLL_SPEED;
+            }
+
+            if (scrollDelta !== 0) {
+                window.scrollBy(0, scrollDelta);
+                mobileDragInitialPanelTopFixed -= scrollDelta; 
+            }
+            
+            const deltaYTouch = coords.y - mobileDragStartY;
+            mobileDragTarget.style.top = (mobileDragInitialPanelTopFixed + deltaYTouch) + 'px';
+
+
+            const mainContainer = document.getElementById('mainPanelContainer');
+            const siblings = Array.from(mainContainer.children).filter(child => 
+                (child.classList && child.classList.contains('draggable-panel') && child !== mobileDragTarget && !child.classList.contains('informative-panel')) || 
+                child === mobileDragPlaceholder
+            );
+            let newPlaceholderIndex = -1;
+            const draggedPanelFixedRect = mobileDragTarget.getBoundingClientRect(); 
+
+            for (let i = 0; i < siblings.length; i++) {
+                const sibling = siblings[i];
+                if (sibling === mobileDragPlaceholder) continue;
+                const siblingRect = sibling.getBoundingClientRect();
+                const siblingCenterY = siblingRect.top + siblingRect.height / 2;
+                if (draggedPanelFixedRect.top + draggedPanelFixedRect.height / 2 < siblingCenterY) { 
+                    newPlaceholderIndex = i;
+                    break;
+                }
+            }
+            if (newPlaceholderIndex === -1 && siblings.length > 0) {
+                if (mobileDragPlaceholder !== siblings[siblings.length -1]) {
+                    const lastSibling = siblings[siblings.length - 1];
+                    if (lastSibling && !lastSibling.classList.contains('news-ticker')) {
+                        mainContainer.insertBefore(mobileDragPlaceholder, lastSibling.nextSibling);
+                    } else if (lastSibling && lastSibling.classList.contains('news-ticker')) {
+                         mainContainer.insertBefore(mobileDragPlaceholder, lastSibling); 
+                    } else if (siblings.length === 1 && siblings[0] === mobileDragPlaceholder) { 
+                    }
+                }
+            } else if (newPlaceholderIndex !== -1 && siblings[newPlaceholderIndex] !== mobileDragPlaceholder) {
+                mainContainer.insertBefore(mobileDragPlaceholder, siblings[newPlaceholderIndex]);
+            }
+        }
+
+        function stopMobileDrag(e) {
+            if (!isMobileDragging || !mobileDragTarget) return;
+            clearInterval(autoScrollLoopId);
+            autoScrollLoopId = null;
+            
+            mobileDragTarget.classList.remove('mobile-panel-dragging');
+            mobileDragTarget.style.position = ''; 
+            mobileDragTarget.style.top = '';
+            mobileDragTarget.style.left = '';
+            mobileDragTarget.style.width = '';
+            mobileDragTarget.style.height = '';
+            mobileDragTarget.style.zIndex = ''; 
+            mobileDragTarget.style.transform = '';
+
+            if (mobileDragPlaceholder && mobileDragPlaceholder.parentElement) {
+                mobileDragPlaceholder.parentElement.insertBefore(mobileDragTarget, mobileDragPlaceholder);
+                mobileDragPlaceholder.remove();
+            }
+            
+            const touch = e.changedTouches ? e.changedTouches[0] : e; 
+            const deltaYSinceStart = Math.abs(touch.clientY - mobileDragStartY);
+            
+            if (deltaYSinceStart > 10) { 
+                justFinishedMobileDrag = true; 
+                setTimeout(() => { justFinishedMobileDrag = false; }, 50); 
+            } else {
+                justFinishedMobileDrag = false;
+            }
+
+            isMobileDragging = false;
+            mobileDragPlaceholder = null;
+            mobileDragTarget = null;
+        }
+
+        function initInteractionsForPanel(panelElement) {
+            const header = panelElement.querySelector('.panel-header');
+            const resizeHandle = panelElement.querySelector('.resize-handle');
+            
+            panelElement.style.willChange = 'transform, width, height, z-index'; 
+            
+            if (header) {
+                header.removeEventListener('mousedown', startDrag);
+                header.removeEventListener('touchstart', startDrag);
+                header.removeEventListener('click', handleHeaderClickToggleMinimize);
+                panelElement.removeEventListener('mousedown', bringToFront);
+                panelElement.removeEventListener('touchstart', bringToFront);
+                header.removeEventListener('touchstart', startMobileDrag);
+
+
+                if (!isMobileView) { 
+                    header.addEventListener('mousedown', startDrag, { passive: false });
+                    header.addEventListener('touchstart', startDrag, { passive: false }); 
+                    panelElement.addEventListener('mousedown', bringToFront, { capture: true }); 
+                    panelElement.addEventListener('touchstart', bringToFront, { capture: true });
+                } else { 
+                    if (!panelElement.classList.contains('informative-panel')) { 
+                        header.addEventListener('touchstart', startMobileDrag, { passive: false });
+                    }
+                }
+                header.addEventListener('click', handleHeaderClickToggleMinimize);
+            }
+
+            if (resizeHandle) {
+                resizeHandle.removeEventListener('mousedown', startResize);
+                resizeHandle.removeEventListener('touchstart', startResize);
+                if (!isMobileView) { 
+                    resizeHandle.addEventListener('mousedown', startResize, { passive: false });
+                    resizeHandle.addEventListener('touchstart', startResize, { passive: false });
+                }
+            }
+        }
+
+
+        function initDragSystem() {
+            isMobileView = window.innerWidth <= 768;
+            const panels = document.querySelectorAll('.draggable-panel'); 
+            
+            panels.forEach(panel => {
+                initInteractionsForPanel(panel);
+                if(!isMobileView && !panel.classList.contains('informative-panel')) {
+                     panel.style.zIndex = 100; 
+                } else if (panel.classList.contains('informative-panel') && !isMobileView) {
+                    panel.style.zIndex = (highestZIndex + 1).toString(); 
+                }
+            });
+
+            initInformativePanelTriggers(); 
+            
+            document.removeEventListener('mousemove', throttleMouseMove);
+            document.removeEventListener('touchmove', throttleMouseMove);
+            document.removeEventListener('mouseup', stopDragResize);
+            document.removeEventListener('touchend', stopDragResize);
+            document.removeEventListener('mouseleave', stopDragResize);
+            document.removeEventListener('touchmove', handleMobileDrag);
+            document.removeEventListener('touchend', stopMobileDrag);
+
+            if (!isMobileView) {
+                document.addEventListener('mousemove', throttleMouseMove, { passive: false });
+                document.addEventListener('touchmove', throttleMouseMove, { passive: false }); 
+                document.addEventListener('mouseup', stopDragResize, { passive: false });
+                document.addEventListener('touchend', stopDragResize, { passive: false }); 
+                document.addEventListener('mouseleave', stopDragResize, { passive: false }); 
+            } else { 
+                document.addEventListener('touchmove', handleMobileDrag, { passive: false });
+                document.addEventListener('touchend', stopMobileDrag, { passive: false });
+            }
+        }
+        
+        function handleHeaderClickToggleMinimize(e) {
+            if (e.target.closest('.panel-btn')) return; 
+            if (isMobileView && justFinishedMobileDrag) { justFinishedMobileDrag = false; return; }
+            if (!isMobileView && desktopDragMoved) { 
+                desktopDragMoved = false; 
+                return; 
+            }
+            
+            const panel = this.closest('.draggable-panel');
+            if (panel) {
+                if (panel.classList.contains('informative-panel')) { 
+                    return; 
+                }
+                toggleMinimize(panel.id);
+            }
+        }
+
+
+        function bringToFront(e) {
+            if (isMobileView) return; 
+            const targetPanel = e.currentTarget; 
+            if (targetPanel && targetPanel.classList.contains('draggable-panel')) {
+                highestZIndex++;
+                targetPanel.style.zIndex = highestZIndex;
+            }
+        }
+
+        let animationFrameId = null; 
+        let lastMouseEvent = null; 
+
+        function throttleMouseMove(e) {
+            if (isMobileView) return;
+            lastMouseEvent = e;
+            if (!animationFrameId) animationFrameId = requestAnimationFrame(() => handleMouseMove(lastMouseEvent));
+        }
+
+        function startDrag(e) { 
+            if (isMobileView || e.target.classList.contains('panel-btn')) return;
+            isDragging = true;
+            desktopDragMoved = false; 
+            dragTarget = e.target.closest('.draggable-panel');
+            if (!dragTarget) return;
+            dragTarget.classList.add('dragging');
+            dragTarget.style.transition = 'none'; 
+            const coords = getEventCoordinates(e);
+            const rect = dragTarget.getBoundingClientRect();
+            
+            if (dragTarget.classList.contains('informative-panel')) { 
+                dragOffset.x = coords.x - (parseFloat(dragTarget.style.left) || rect.left); 
+                dragOffset.y = coords.y - (parseFloat(dragTarget.style.top) || rect.top);   
+            } else { 
+                dragOffset.x = coords.x - rect.left;
+                dragOffset.y = coords.y - rect.top;
+                dragTarget.dataset.initialCssX = dragTarget.offsetLeft;
+                dragTarget.dataset.initialCssY = dragTarget.offsetTop;
+            }
+        }
+        function startResize(e) { 
+            if (isMobileView) return;
+            e.preventDefault(); e.stopPropagation(); 
+            isResizing = true;
+            desktopDragMoved = false; 
+            resizeTarget = e.target.closest('.draggable-panel');
+            if(!resizeTarget) return;
+            resizeTarget.style.transition = 'none'; 
+            const coords = getEventCoordinates(e);
+            const rect = resizeTarget.getBoundingClientRect();
+            resizeTarget.dataset.initialWidth = rect.width;
+            resizeTarget.dataset.initialHeight = rect.height;
+            resizeTarget.dataset.startX = coords.x;
+            resizeTarget.dataset.startY = coords.y;
+        }
+        function handleMouseMove(event) { 
+            if (isMobileView || !event) { animationFrameId = null; return; }
+            if (event.type === 'touchmove' && (isDragging || isResizing)) event.preventDefault();
+            const coords = getEventCoordinates(event);
+            if (isDragging && dragTarget) {
+                desktopDragMoved = true; 
+                let newX, newY;
+                
+                if (dragTarget.classList.contains('informative-panel')) {
+                    newX = coords.x - dragOffset.x;
+                    newY = coords.y - dragOffset.y;
+                    
+                    const panelWidth = dragTarget.offsetWidth;
+                    const panelHeight = dragTarget.offsetHeight;
+                    newX = Math.max(0, Math.min(newX, window.innerWidth - panelWidth));
+                    newY = Math.max(0, Math.min(newY, window.innerHeight - panelHeight));
+                    
+                    dragTarget.style.left = newX + 'px';
+                    dragTarget.style.top = newY + 'px';
+                } else {
+                    const container = document.querySelector('.main-container'); 
+                    const containerRect = container.getBoundingClientRect();
+                    newX = coords.x - dragOffset.x;
+                    newY = coords.y - dragOffset.y;
+                    newX = Math.max(0, Math.min(newX, containerRect.width - dragTarget.offsetWidth));
+                    newY = Math.max(0, Math.min(newY, containerRect.height - dragTarget.offsetHeight));
+                    dragTarget.style.transform = `translate3d(${newX - parseFloat(dragTarget.dataset.initialCssX)}px, ${newY - parseFloat(dragTarget.dataset.initialCssY)}px, 0)`;
+                }
+
+            } else if (isResizing && resizeTarget) {
+                desktopDragMoved = true; 
+                const deltaX = coords.x - parseFloat(resizeTarget.dataset.startX);
+                const deltaY = coords.y - parseFloat(resizeTarget.dataset.startY);
+                let newWidth = Math.max(250, parseFloat(resizeTarget.dataset.initialWidth) + deltaX); 
+                let newHeight = Math.max(150, parseFloat(resizeTarget.dataset.initialHeight) + deltaY); 
+                
+                const controlPanelEl = document.getElementById('appControlPanel');
+                const newsTickerEl = document.querySelector('.news-ticker');
+                const controlPanelHeight = controlPanelEl ? controlPanelEl.offsetHeight : 0;
+                const newsTickerHeight = newsTickerEl && getComputedStyle(newsTickerEl).display !== 'none' ? newsTickerEl.offsetHeight : 0;
+                const topMargin = 20; 
+                const bottomMargin = 20; 
+
+                if (resizeTarget.classList.contains('informative-panel')) {
+                    const panelCurrentLeft = parseFloat(resizeTarget.style.left) || resizeTarget.getBoundingClientRect().left;
+                    const panelCurrentTop = parseFloat(resizeTarget.style.top) || resizeTarget.getBoundingClientRect().top;
+
+                    if (panelCurrentLeft + newWidth > window.innerWidth - 10) newWidth = window.innerWidth - panelCurrentLeft - 10;
+                    if (panelCurrentTop + newHeight > window.innerHeight - newsTickerHeight - 10 - topMargin) newHeight = window.innerHeight - panelCurrentTop - newsTickerHeight -10 - topMargin; 
+                } else { 
+                    const panelCurrentLeft = resizeTarget.offsetLeft, panelCurrentTop = resizeTarget.offsetTop;
+                    const containerRect = resizeTarget.parentElement.getBoundingClientRect();
+                    if (panelCurrentLeft + newWidth > containerRect.width) newWidth = containerRect.width - panelCurrentLeft;
+                    if (panelCurrentTop + newHeight > containerRect.height) newHeight = containerRect.height - panelCurrentTop;
+                }
+                resizeTarget.style.width = newWidth + 'px'; resizeTarget.style.height = newHeight + 'px';
+                 if (activeInformativeChart && resizeTarget.classList.contains('informative-panel')) {
+                    activeInformativeChart.resize();
+                }
+            }
+            animationFrameId = null; 
+            if (isDragging || isResizing) animationFrameId = requestAnimationFrame(() => handleMouseMove(lastMouseEvent)); 
+        }
+        function stopDragResize(e) { 
+            if (isMobileView) return;
+            if (isDragging && dragTarget) {
+                if (dragTarget.classList.contains('informative-panel')) {
+                    // Position is already set by style.left/top
+                } else { 
+                    const currentTransform = new WebKitCSSMatrix(window.getComputedStyle(dragTarget).transform);
+                    dragTarget.style.left = (parseFloat(dragTarget.dataset.initialCssX) + currentTransform.m41) + 'px';
+                    dragTarget.style.top = (parseFloat(dragTarget.dataset.initialCssY) + currentTransform.m42) + 'px';
+                    dragTarget.style.transform = ''; 
+                }
+                dragTarget.style.transition = ''; 
+                dragTarget.classList.remove('dragging');
+            }
+            if (isResizing && resizeTarget) {
+                resizeTarget.style.transition = ''; 
+                if (activeInformativeChart && resizeTarget.classList.contains('informative-panel')) {
+                    activeInformativeChart.resize(); 
+                }
+            }
+            
+            setTimeout(() => { desktopDragMoved = false; }, 0);
+
+            isDragging = false; dragTarget = null; isResizing = false; resizeTarget = null;
+            if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
+            lastMouseEvent = null;
+        }
+
+        function togglePanel(panelId, forceState) { 
+            const panel = document.getElementById(panelId);
+            if (panel) {
+                const currentlyHidden = panel.classList.contains('hidden');
+                let makeHidden;
+                if (typeof forceState === 'boolean') {
+                    makeHidden = forceState;
+                } else {
+                    makeHidden = !currentlyHidden;
+                }
+                panel.classList.toggle('hidden', makeHidden);
+
+                if (panelManagerSection && panelManagerSection.classList.contains('expanded') && !isCancellingPanelVisibility) {
+                    const checkbox = document.getElementById(`chk-pm-${panelId}`); 
+                    if (checkbox) {
+                        checkbox.checked = !makeHidden;
+                    }
+                }
+            }
+        }
+        let isCancellingPanelVisibility = false; 
+
+        function toggleMinimize(panelId) { 
+            const panel = document.getElementById(panelId);
+            if (panel) {
+                if (panel.classList.contains('informative-panel')) {
+                    return; 
+                }
+                panel.classList.toggle('minimized');
+            }
+        }
+        function showAllPanels() { 
+            document.querySelectorAll('.draggable-panel:not(.informative-panel)').forEach(panel => {
+                panel.classList.remove('hidden', 'minimized');
+                const checkbox = document.getElementById(`chk-pm-${panel.id}`); 
+                if (checkbox) checkbox.checked = true;
+            });
+        }
+        function hideAllPanels() { 
+             document.querySelectorAll('.draggable-panel:not(.informative-panel)').forEach(panel => {
+                panel.classList.add('hidden');
+                const checkbox = document.getElementById(`chk-pm-${panel.id}`); 
+                if (checkbox) checkbox.checked = false;
+            });
+        }
+        
+        const initialPanelStates = {};
+        const initialPanelOrder = []; 
+
+        function storeInitialPositions() { 
+            const panels = document.querySelectorAll('#mainPanelContainer > .draggable-panel');
+            initialPanelOrder.length = 0; 
+            panels.forEach((panel) => {
+                initialPanelStates[panel.id] = {
+                    top: panel.style.top, left: panel.style.left, right: panel.style.right,
+                    bottom: panel.style.bottom, width: panel.style.width, height: panel.style.height,
+                    transform: panel.style.transform, zIndex: panel.style.zIndex || '100' 
+                };
+                if (panel.id !== 'news-ticker' && !panel.classList.contains('informative-panel')) {
+                    initialPanelOrder.push(panel.id); 
+                }
+            });
+        }
+
+        function resetPositions() { 
+            const openInformativePanel = document.querySelector('.informative-panel');
+            if (openInformativePanel) {
+                closeInformativePanel(openInformativePanel.id, true); 
+            }
+
+            isMobileView = window.innerWidth <= 768;
+            if (isMobileView) {
+                const container = document.getElementById('mainPanelContainer');
+                const newsTicker = container.querySelector('.news-ticker');
+                                
+                const panelsToReorder = [];
+                initialPanelOrder.forEach(panelId => {
+                    const panel = document.getElementById(panelId);
+                    if (panel) panelsToReorder.push(panel);
+                });
+                panelsToReorder.forEach(panel => panel.remove());
+
+                panelsToReorder.forEach(panel => {
+                    container.insertBefore(panel, newsTicker); 
+                });
+
+                document.querySelectorAll('.draggable-panel').forEach(panel => {
+                    panel.classList.remove('hidden', 'minimized');
+                    panel.style.transform = ''; 
+                    panel.style.position = ''; panel.style.left = ''; panel.style.top = '';
+                    panel.style.width = ''; panel.style.height = ''; panel.style.zIndex = '';
+                });
+                window.scrollTo(0,0);
+                adjustMainContainerPaddingMobile(); 
+                return;
+            }
+
+             const defaultPositions = {
+                'panel1': { top: '100px', left: '30px', width: '400px', height: 'auto', right: 'auto', bottom: 'auto', transform: '', zIndex: '100' }, 
+                'panel2': { top: '100px', left: '850px', width: 'calc(100vw - 880px)', height: '520px', right: 'auto', bottom: 'auto', transform: '', zIndex: '100' },
+                'panel3': { top: '370px', left: '30px', width: '400px', height: '250px', right: 'auto', bottom: 'auto', transform: '', zIndex: '100' }, 
+                'panelStats': { top: '100px', left: '450px', width: '380px', height: '280px', right: 'auto', bottom: 'auto', transform: '', zIndex: '100' }
+            };
+            highestZIndex = 100; 
+            document.querySelectorAll('.draggable-panel').forEach(panel => {
+                const pos = defaultPositions[panel.id] || initialPanelStates[panel.id]; 
+                if (panel && pos && !panel.classList.contains('informative-panel')) {
+                    Object.assign(panel.style, {
+                        top: pos.top, left: pos.left, right: pos.right, bottom: pos.bottom,
+                        width: pos.width, height: pos.height, transform: pos.transform || '', zIndex: pos.zIndex || '100'
+                    });
+                    if (panel.id === 'panel1' && !isMobileView) panel.style.height = 'auto'; 
+                    panel.classList.remove('hidden', 'minimized');
+                }
+            });
+            const defaultPanelIds = Object.keys(defaultPositions);
+            document.querySelectorAll('.draggable-panel').forEach(panel => {
+                if (!initialPanelStates[panel.id] && !defaultPanelIds.includes(panel.id) && panel.id.startsWith('panelNew')) { 
+                    panel.remove();
+                }
+            });
+            let maxExistingId = 3; 
+            document.querySelectorAll('.draggable-panel[id^="panelNew"]').forEach(p => {
+                const idNum = parseInt(p.id.replace('panelNew', ''));
+                if (!isNaN(idNum) && idNum > maxExistingId) maxExistingId = idNum;
+            });
+            panelCounter = maxExistingId;
+        }
+
+        function toggleGlowEffect() { 
+            glowEnabled = !glowEnabled;
+            document.querySelectorAll('.draggable-panel').forEach(panel => {
+                panel.classList.toggle('glow-effect', glowEnabled);
+            });
+        }
+        function addNewPanel() { 
+            panelCounter++;
+            const newPanel = document.createElement('div');
+            newPanel.className = 'draggable-panel';
+            if (glowEnabled) newPanel.classList.add('glow-effect');
+            const newPanelId = `panelNew${panelCounter}`;
+            newPanel.id = newPanelId; 
+            
+            if (!isMobileView) { 
+                const initialTop = 50 + (panelCounter % 5) * 40 + Math.floor(Math.random() * 20);
+                const initialLeft = 50 + (panelCounter % 10) * 30 + Math.floor(Math.random() * 20);
+                newPanel.style.cssText = `width: 300px; height: 250px; top: ${initialTop}px; left: ${initialLeft}px;`;
+                highestZIndex++; 
+                newPanel.style.zIndex = highestZIndex;
+            } else { 
+                 newPanel.style.cssText = `width: 95%; margin: 0 auto 20px auto; height: 250px;`; 
+            }
+
+            newPanel.innerHTML = `
+                <div class="panel-header">
+                    <span class="panel-title">📋 Nuevo Panel ${panelCounter}</span>
+                    <div class="panel-controls">
+                         <button class="panel-btn close-btn" onclick="togglePanel('${newPanelId}')">×</button>
+                    </div>
+                </div>
+                <div class="panel-content"> <div class="new-panel-content-wrapper"> 
+                        <h3>Panel ${panelCounter}</h3> <p>Contenido adaptable. ¡Redimensiona!</p>
+                        <div class="random-value-container">
+                            <div class="value" style="font-size: 22px;">$${Math.floor(Math.random() * 900 + 100)}</div>
+                            <div class="label" style="font-size: 11px;">Dato Aleatorio</div>
+                        </div> </div> </div>
+                <div class="resize-handle"></div> `;
+            
+            const mainContainer = document.getElementById('mainPanelContainer');
+            const newsTicker = mainContainer.querySelector('.news-ticker');
+            if (newsTicker) mainContainer.insertBefore(newPanel, newsTicker);
+            else mainContainer.appendChild(newPanel);
+            
+            initInteractionsForPanel(newPanel); 
+
+            if(panelManagerSection && panelManagerSection.classList.contains('expanded')) {
+                populatePanelManagerList();
+            }
+        }
+
+        function updateRealTimeData() { 
+            const stats = {
+                inflationRate: (Math.random() * 5 + 8).toFixed(1) + '%',
+                riskCountry: (2000 + Math.floor(Math.random() * 500)).toLocaleString(),
+                reserves: '$' + (Math.random() * 5 + 25).toFixed(1) + 'B',
+                dolarCcl: '$' + (1150 + Math.floor(Math.random() * 50)).toLocaleString()
+            };
+            Object.keys(stats).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) element.textContent = stats[key];
+            });
+        }
+        
+        function checkAndUpdateView() { 
+            const currentlyMobile = window.innerWidth <= 768;
+            if (currentlyMobile !== isMobileView) {
+                isMobileView = currentlyMobile;
+                const openInformativePanel = document.querySelector('.informative-panel');
+                if (openInformativePanel) {
+                    closeInformativePanel(openInformativePanel.id, true); 
+                }
+                
+                initDragSystem(); 
+                
+                if (!isMobileView) {
+                     resetPositions(); 
+                } else { 
+                    document.querySelectorAll('.draggable-panel:not(.informative-panel)').forEach(p => { 
+                        p.style.position = ''; p.style.left = ''; p.style.top = '';
+                        p.style.width = ''; p.style.height = ''; p.style.transform = ''; p.style.zIndex = '';
+                    });
+                    resetPositions(); 
+                }
+                adjustMainContainerPaddingMobile(); 
+            }
+        }
+
+        function adjustMainContainerPaddingMobile() {
+            const mainContainerEl = document.getElementById('mainPanelContainer');
+            const controlPanelEl = document.getElementById('appControlPanel');
+            const newsTickerEl = document.querySelector('.news-ticker');
+            const digitalClockEl = document.getElementById('digitalClock');
+            
+            if (isMobileView && controlPanelEl) {
+                requestAnimationFrame(() => { 
+                    let topPadding = 10; 
+                    if (digitalClockEl && getComputedStyle(digitalClockEl).display !== 'none') {
+                        topPadding += digitalClockEl.offsetHeight + 5; 
+                    }
+                    if (controlPanelEl && getComputedStyle(controlPanelEl).display !== 'none') {
+                         controlPanelEl.style.top = `${topPadding - 5}px`; 
+                         topPadding += controlPanelEl.offsetHeight + 10;
+                    }
+                    mainContainerEl.style.paddingTop = `${topPadding}px`;
+
+                     if (newsTickerEl && getComputedStyle(newsTickerEl).display !== 'none') { 
+                        mainContainerEl.style.paddingBottom = newsTickerEl.offsetHeight + 20 + 'px'; 
+                     } else {
+                        mainContainerEl.style.paddingBottom = '20px'; 
+                     }
+                });
+            } else if (!isMobileView) { 
+                 mainContainerEl.style.paddingTop = '95px'; 
+                 mainContainerEl.style.paddingBottom = newsTickerEl && getComputedStyle(newsTickerEl).display !== 'none' ? (newsTickerEl.offsetHeight + 20 + 'px') : '20px'; 
+                 if(controlPanelEl) controlPanelEl.style.top = ''; 
+            }
+        }
+
+        // --- Panel Manager Functions (Expandable Section) ---
+        function initPanelManager() {
+            panelManagerSection = document.getElementById('panelManagerSection');
+            panelManagerListEl = document.getElementById('panelManagerList'); 
+            togglePanelManagerBtn = document.getElementById('togglePanelManagerBtn');
+            confirmPanelVisibilityBtn = document.getElementById('confirmPanelVisibilityBtn');
+            cancelPanelVisibilityBtn = document.getElementById('cancelPanelVisibilityBtn');
+
+            if (togglePanelManagerBtn) {
+                togglePanelManagerBtn.addEventListener('click', togglePanelManagerDisplay);
+            }
+            if (confirmPanelVisibilityBtn) {
+                confirmPanelVisibilityBtn.addEventListener('click', handleConfirmPanelVisibility);
+            }
+            if (cancelPanelVisibilityBtn) {
+                cancelPanelVisibilityBtn.addEventListener('click', handleCancelPanelVisibility);
+            }
+        }
+
+        function togglePanelManagerDisplay() {
+            if (!panelManagerSection) return;
+            const isExpanded = panelManagerSection.classList.toggle('expanded');
+            if (isExpanded) {
+                populatePanelManagerList();
+                initialPanelVisibilityStates = [];
+                document.querySelectorAll('.draggable-panel').forEach(panel => {
+                    if (panel.id && !panel.classList.contains('informative-panel')) { 
+                        initialPanelVisibilityStates.push({
+                            id: panel.id,
+                            hidden: panel.classList.contains('hidden')
+                        });
+                    }
+                });
+            }
+            setTimeout(() => {
+                adjustMainContainerPaddingMobile();
+            }, 300); 
+        }
+
+        function populatePanelManagerList() {
+            if (!panelManagerListEl) return;
+            panelManagerListEl.innerHTML = ''; 
+            const panels = document.querySelectorAll('#mainPanelContainer > .draggable-panel'); 
+            panels.forEach(panel => {
+                const panelId = panel.id;
+                if (!panelId || panel.classList.contains('news-ticker') || panel.classList.contains('informative-panel')) return; 
+
+                const titleEl = panel.querySelector('.panel-title');
+                const panelTitle = titleEl ? titleEl.textContent : panelId;
+                const isVisible = !panel.classList.contains('hidden');
+
+                const listItem = document.createElement('li');
+                const label = document.createElement('label');
+                label.htmlFor = `chk-pm-${panelId}`; 
+                label.textContent = panelTitle;
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `chk-pm-${panelId}`;
+                checkbox.checked = isVisible;
+                checkbox.dataset.panelId = panelId;
+
+                checkbox.addEventListener('change', function() {
+                    const targetPanel = document.getElementById(this.dataset.panelId);
+                    if (targetPanel) {
+                        targetPanel.classList.toggle('hidden', !this.checked);
+                    }
+                });
+
+                label.prepend(checkbox); 
+                listItem.appendChild(label);
+                panelManagerListEl.appendChild(listItem);
+            });
+        }
+
+        function handleConfirmPanelVisibility() {
+            if (panelManagerSection) panelManagerSection.classList.remove('expanded');
+            setTimeout(() => { 
+                adjustMainContainerPaddingMobile();
+            }, 300);
+        }
+
+        function handleCancelPanelVisibility() {
+            isCancellingPanelVisibility = true;
+            initialPanelVisibilityStates.forEach(state => {
+                const panel = document.getElementById(state.id);
+                if (panel) {
+                    panel.classList.toggle('hidden', state.hidden);
+                    const checkbox = document.getElementById(`chk-pm-${state.id}`);
+                    if (checkbox) checkbox.checked = !state.hidden;
+                }
+            });
+            isCancellingPanelVisibility = false;
+            if (panelManagerSection) panelManagerSection.classList.remove('expanded');
+            setTimeout(() => { 
+                adjustMainContainerPaddingMobile();
+            }, 300);
+        }
+
+        // --- Informative Panel Logic ---
+        let currentInformativePanelId = null;
+
+        function initInformativePanelTriggers() {
+            document.querySelectorAll('.activator-subpanel').forEach(subpanel => {
+                subpanel.removeEventListener('dblclick', handleSubpanelDoubleClick); 
+                subpanel.removeEventListener('touchend', handleSubpanelTouchEndWrapper); 
+                
+                subpanel.addEventListener('dblclick', handleSubpanelDoubleClick);
+                
+                let lastTapTime = 0;
+                let tapTimer; 
+                function handleSubpanelTouchEndWrapper(e) { 
+                    handleSubpanelTouchEnd(e, this, lastTapTime, tapTimer);
+                    lastTapTime = new Date().getTime(); 
+                }
+                subpanel.addEventListener('touchend', handleSubpanelTouchEndWrapper);
+            });
+        }
+
+        function handleSubpanelDoubleClick(e) {
+            if (isMobileView && e.type === 'dblclick') return; 
+            const infoType = this.dataset.infoType;
+            const infoTitle = this.dataset.infoTitle || 'Detalle';
+            openInformativePanel(infoType, infoTitle);
+        }
+
+        function handleSubpanelTouchEnd(e, element, lastTapTime, tapTimer) { 
+            if (!isMobileView) return;
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTapTime;
+            clearTimeout(tapTimer); 
+            if (tapLength < 300 && tapLength > 0) { 
+                e.preventDefault(); 
+                const infoType = element.dataset.infoType;
+                const infoTitle = element.dataset.infoTitle || 'Detalle';
+                openInformativePanel(infoType, infoTitle);
+            } 
+        }
+
+
+        function openInformativePanel(infoType, infoTitle) {
+            if (currentInformativePanelId) {
+                const existingInfoPanel = document.getElementById(currentInformativePanelId);
+                if (existingInfoPanel) closeInformativePanel(currentInformativePanelId, true); 
+            }
+
+            previouslyVisiblePanels = [];
+            document.querySelectorAll('.draggable-panel:not(.news-ticker):not(.informative-panel)').forEach(p => {
+                if (!p.classList.contains('hidden')) {
+                    previouslyVisiblePanels.push({ id: p.id, minimized: p.classList.contains('minimized') });
+                    p.classList.add('hidden');
+                }
+            });
+
+            informativePanelCounter++;
+            currentInformativePanelId = `informativePanel-${informativePanelCounter}`;
+            const informativePanel = document.createElement('div');
+            informativePanel.id = currentInformativePanelId;
+            informativePanel.className = 'draggable-panel informative-panel'; 
+            
+            const controlPanelEl = document.getElementById('appControlPanel');
+            const newsTickerEl = document.querySelector('.news-ticker');
+            const digitalClockEl = document.getElementById('digitalClock'); 
+
+            let controlPanelHeight = 0;
+            if(controlPanelEl && getComputedStyle(controlPanelEl).display !== 'none') {
+                controlPanelHeight = controlPanelEl.offsetHeight;
+            }
+            let clockHeight = 0;
+            if(digitalClockEl && getComputedStyle(digitalClockEl).display !== 'none') {
+                clockHeight = digitalClockEl.offsetHeight;
+            }
+            const newsTickerHeight = newsTickerEl && getComputedStyle(newsTickerEl).display !== 'none' ? newsTickerEl.offsetHeight : 0; 
+            const verticalMargin = 15; 
+            
+            let topPosition;
+            let panelWidthValue;
+
+            if (isMobileView) {
+                topPosition = (controlPanelEl ? (parseFloat(getComputedStyle(controlPanelEl).top) || 0) + controlPanelHeight : (clockHeight > 0 ? clockHeight : 0)) + verticalMargin;
+                informativePanel.style.width = '95vw'; 
+                informativePanel.style.left = '2.5vw';
+                informativePanel.style.transform = '';
+            } else { 
+                 topPosition = (digitalClockEl ? (parseFloat(getComputedStyle(digitalClockEl).top) || 0) + clockHeight : controlPanelHeight) + verticalMargin;
+                 panelWidthValue = Math.min(window.innerWidth * 0.9, 1200); 
+                 informativePanel.style.width = `${panelWidthValue}px`; 
+                 informativePanel.style.left = `${(window.innerWidth - panelWidthValue) / 2}px`; 
+                 informativePanel.style.transform = ''; 
+            }
+            
+            informativePanel.style.top = `${topPosition}px`;
+            informativePanel.style.height = `calc(100vh - ${topPosition}px - ${newsTickerHeight}px - ${verticalMargin}px)`; 
+            
+            if (!isMobileView) {
+                highestZIndex++;
+                informativePanel.style.zIndex = highestZIndex;
+            }
+
+
+            informativePanel.innerHTML = `
+                <div class="panel-header">
+                    <span class="panel-title">${infoTitle}</span>
+                    <div class="panel-controls">
+                        <button class="panel-btn back-btn" title="Volver atrás" onclick="closeInformativePanel('${currentInformativePanelId}')">
+                            <svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="chart-container">
+                        <canvas id="informativeChart-${informativePanelCounter}"></canvas>
+                    </div>
+                </div>
+                <div class="resize-handle"></div>
+            `;
+            const mainContainer = document.getElementById('mainPanelContainer');
+            mainContainer.appendChild(informativePanel);
+            initInteractionsForPanel(informativePanel); 
+            renderInformativeChart(`informativeChart-${informativePanelCounter}`, infoType);
+            if (isMobileView) adjustMainContainerPaddingMobile(); 
+        }
+
+        function closeInformativePanel(panelId, skipRestore = false) {
+            const informativePanel = document.getElementById(panelId);
+            if (informativePanel) {
+                if(activeInformativeChart) {
+                    activeInformativeChart.destroy();
+                    activeInformativeChart = null;
+                }
+                informativePanel.remove();
+            }
+            if (currentInformativePanelId === panelId) {
+                currentInformativePanelId = null;
+            }
+
+            if (!skipRestore) {
+                previouslyVisiblePanels.forEach(panelState => {
+                    const panel = document.getElementById(panelState.id);
+                    if (panel) {
+                        panel.classList.remove('hidden');
+                        if (panelState.minimized) {
+                            panel.classList.add('minimized');
+                        } else {
+                            panel.classList.remove('minimized');
+                        }
+                    }
+                });
+                previouslyVisiblePanels = [];
+            }
+             adjustMainContainerPaddingMobile(); 
+        }
+
+        function renderInformativeChart(canvasId, infoType) {
+            const canvasElement = document.getElementById(canvasId);
+            if (!canvasElement) return;
+            const ctx = canvasElement.getContext('2d');
+
+            let chartData = {
+                labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Dato de Ejemplo',
+                    data: [10, 20, 15, 25, 22, 30],
+                    borderColor: '#66d9ef',
+                    backgroundColor: 'rgba(102, 217, 239, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            };
+            if (infoType === 'inflation-annual' || infoType === 'inflation-annual-eco') {
+                chartData.datasets[0].label = 'Inflación Anual (Ejemplo)';
+                chartData.datasets[0].data = [200, 210, 225, 230, 254, 270]; 
+            } else if (infoType.startsWith('dolar-')) {
+                 chartData.datasets[0].label = `Evolución ${infoType.replace('-detail','').replace('dolar-','Dólar ')} (Ejemplo)`;
+                 chartData.datasets[0].data = [900, 920, 910, 950, 940, 960]; 
+            }
+
+
+            if (activeInformativeChart) activeInformativeChart.destroy();
+            activeInformativeChart = new Chart(ctx, {
+                type: 'line',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#ffffff' } } },
+                    scales: {
+                        x: { ticks: { color: '#ffffff' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                        y: { ticks: { color: '#ffffff' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                    }
+                }
+            });
+        }
+
+        // --- Digital Clock Functions ---
+        function updateClock() {
+            const now = new Date();
+            const timeZone = 'America/Argentina/Buenos_Aires';
+
+            const timeOptions = {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false,
+                timeZone: timeZone
+            };
+            let timeString = now.toLocaleTimeString('es-AR', timeOptions);
+            
+            const dateOptions = { 
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                timeZone: timeZone
+            };
+            const dateString = now.toLocaleDateString('es-AR', dateOptions);
+
+            const timeDisplayEl = document.getElementById('timeDisplay');
+            const dateDisplayEl = document.getElementById('dateDisplay');
+
+            if (timeDisplayEl) {
+                const parts = timeString.split(':');
+                if (parts.length === 3) {
+                    timeDisplayEl.innerHTML = 
+                        `<span class="digit-group">${parts[0]}</span><span class="separator">:</span><span class="digit-group">${parts[1]}</span><span class="separator">:</span><span class="digit-group">${parts[2]}</span>`;
+                } else {
+                    timeDisplayEl.textContent = timeString; 
+                }
+            }
+            if (dateDisplayEl) {
+                dateDisplayEl.textContent = dateString;
+            }
+        }
+        
+
+        window.addEventListener('load', () => {
+            storeInitialPositions(); 
+            initBackground();
+            initChart();
+            initDragSystem(); 
+            initPanelManager(); 
+            // initAdminFeature(); // Admin functionality removed
+            setInterval(updateRealTimeData, 5000);
+            
+            updateClock(); 
+            setInterval(updateClock, 1000); 
+
+            adjustMainContainerPaddingMobile(); 
+
+            window.addEventListener('resize', () => {
+                if (rendererThree) { 
+                    rendererThree.setSize(window.innerWidth, window.innerHeight);
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                }
+                const oldIsMobile = isMobileView;
+                checkAndUpdateView();
+                if (oldIsMobile !== isMobileView || isMobileView) { 
+                    adjustMainContainerPaddingMobile();
+                }
+                if (!isMobileView) {
+                    const panel1 = document.getElementById('panel1');
+                    if(panel1) panel1.style.height = 'auto';
+                }
+
+            });
+             // Initial check for mobile layout
+            if (isMobileView) {
+                resetPositions(); 
+            } else { 
+                const panel1 = document.getElementById('panel1');
+                if(panel1) panel1.style.height = 'auto';
+            }
+        });
+
+        document.addEventListener('selectstart', (e) => { 
+            if (isDragging || isResizing || isMobileDragging) e.preventDefault();
+        });
+    </script>
+
+    <script type="module">
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-analytics.js";
+      // TODO: Add SDKs for Firebase products that you want to use
+      // https://firebase.google.com/docs/web/setup#available-libraries
+
+      // Your web app's Firebase configuration
+      // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+      const firebaseConfig = {
+        apiKey: "AIzaSyAe3iuqE55_MER-RNWmmCnDv5hRVjBh-6I",
+        authDomain: "termo-ar-2025.firebaseapp.com",
+        projectId: "termo-ar-2025",
+        storageBucket: "termo-ar-2025.appspot.com", 
+        messagingSenderId: "410603132578",
+        appId: "1:410603132578:web:8b861aae9e1b56a0ace9fb",
+        measurementId: "G-761Q8S4KLV"
+      };
+
+      // Initialize Firebase
+      try {
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        console.log("Firebase initialized successfully.");
+      } catch (e) {
+        console.error("Error initializing Firebase:", e);
+      }
+    </script>
+
+</body>
+</html>
