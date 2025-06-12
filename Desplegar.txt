@@ -1,0 +1,9 @@
+Desplegar	
+firebase deploy --only hosting	
+
+Sube tu sitio web a Firebase Hosting y lo hace accesible online
+
+
+
+Probar local	
+firebase serve o firebase emulators:start
